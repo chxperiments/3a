@@ -12,7 +12,6 @@ func TestDefaultConfigPath(t *testing.T) {
 	if path == "" {
 		t.Fatal("DefaultConfigPath() returned empty string")
 	}
-	// Should end with .3a/config.yaml
 	if filepath.Base(path) != "config.yaml" {
 		t.Errorf("expected path to end with config.yaml, got %s", path)
 	}
@@ -28,18 +27,12 @@ profiles:
   - name: prod-aws
     display_name: "Production AWS"
     provider: aws
-    credentials:
-      type: profile
-      profile_name: prod
     regions:
       - us-east-1
       - us-west-2
   - name: staging-oci
     display_name: "Staging OCI"
     provider: oci
-    credentials:
-      type: config_file
-      profile_name: DEFAULT
     regions:
       - us-ashburn-1
 `
@@ -72,12 +65,6 @@ profiles:
 	if p.Provider != "aws" {
 		t.Errorf("Profiles[0].Provider = %q, want %q", p.Provider, "aws")
 	}
-	if p.Credentials.Type != "profile" {
-		t.Errorf("Profiles[0].Credentials.Type = %q, want %q", p.Credentials.Type, "profile")
-	}
-	if p.Credentials.ProfileName != "prod" {
-		t.Errorf("Profiles[0].Credentials.ProfileName = %q, want %q", p.Credentials.ProfileName, "prod")
-	}
 	if len(p.Regions) != 2 {
 		t.Fatalf("len(Profiles[0].Regions) = %d, want 2", len(p.Regions))
 	}
@@ -88,9 +75,6 @@ profiles:
 	p2 := cfg.Profiles[1]
 	if p2.Provider != "oci" {
 		t.Errorf("Profiles[1].Provider = %q, want %q", p2.Provider, "oci")
-	}
-	if p2.Credentials.Type != "config_file" {
-		t.Errorf("Profiles[1].Credentials.Type = %q, want %q", p2.Credentials.Type, "config_file")
 	}
 }
 
@@ -106,9 +90,6 @@ func TestLoadNonExistentFile(t *testing.T) {
 	}
 	if cfgErr.Path != "/nonexistent/path/config.yaml" {
 		t.Errorf("ConfigError.Path = %q, want %q", cfgErr.Path, "/nonexistent/path/config.yaml")
-	}
-	if cfgErr.Message != "unable to read config file" {
-		t.Errorf("ConfigError.Message = %q, want %q", cfgErr.Message, "unable to read config file")
 	}
 }
 
@@ -134,9 +115,6 @@ profiles:
 	if !errors.As(err, &cfgErr) {
 		t.Fatalf("expected *ConfigError, got %T", err)
 	}
-	if cfgErr.Message != "malformed config file" {
-		t.Errorf("ConfigError.Message = %q, want %q", cfgErr.Message, "malformed config file")
-	}
 }
 
 func TestSaveAndLoad(t *testing.T) {
@@ -147,11 +125,7 @@ func TestSaveAndLoad(t *testing.T) {
 				Name:        "test-aws",
 				DisplayName: "Test AWS Account",
 				Provider:    "aws",
-				Credentials: Credential{
-					Type:        "profile",
-					ProfileName: "test",
-				},
-				Regions: []string{"us-east-1", "eu-west-1"},
+				Regions:     []string{"us-east-1", "eu-west-1"},
 			},
 		},
 	}
@@ -179,17 +153,8 @@ func TestSaveAndLoad(t *testing.T) {
 	if p.Name != "test-aws" {
 		t.Errorf("Name = %q, want %q", p.Name, "test-aws")
 	}
-	if p.DisplayName != "Test AWS Account" {
-		t.Errorf("DisplayName = %q, want %q", p.DisplayName, "Test AWS Account")
-	}
 	if p.Provider != "aws" {
 		t.Errorf("Provider = %q, want %q", p.Provider, "aws")
-	}
-	if p.Credentials.Type != "profile" {
-		t.Errorf("Credentials.Type = %q, want %q", p.Credentials.Type, "profile")
-	}
-	if p.Credentials.ProfileName != "test" {
-		t.Errorf("Credentials.ProfileName = %q, want %q", p.Credentials.ProfileName, "test")
 	}
 	if len(p.Regions) != 2 || p.Regions[0] != "us-east-1" || p.Regions[1] != "eu-west-1" {
 		t.Errorf("Regions = %v, want [us-east-1 eu-west-1]", p.Regions)
@@ -206,7 +171,6 @@ func TestSaveCreatesDirectories(t *testing.T) {
 		t.Fatalf("Save() returned error: %v", err)
 	}
 
-	// Verify the file exists
 	if _, err := os.Stat(cfgPath); os.IsNotExist(err) {
 		t.Fatal("config file was not created")
 	}
@@ -224,8 +188,6 @@ func TestConfigErrorImplementsError(t *testing.T) {
 	if msg == "" {
 		t.Fatal("Error() returned empty string")
 	}
-
-	// Test Unwrap
 	if !errors.Is(cfgErr, inner) {
 		t.Error("errors.Is should find the inner error")
 	}

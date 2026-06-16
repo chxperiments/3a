@@ -22,18 +22,12 @@ type SteampipeConfig struct {
 
 
 // AccountProfile defines a cloud account connection.
+// Credentials are managed by Steampipe directly (~/.steampipe/config/).
 type AccountProfile struct {
-	Name        string     `yaml:"name"`
-	DisplayName string     `yaml:"display_name"`
-	Provider    string     `yaml:"provider"` // "aws" or "oci"
-	Credentials Credential `yaml:"credentials"`
-	Regions     []string   `yaml:"regions"`
-}
-
-// Credential specifies how to authenticate.
-type Credential struct {
-	Type        string `yaml:"type"`         // "profile", "env", "config_file"
-	ProfileName string `yaml:"profile_name"` // named profile reference
+	Name        string   `yaml:"name"`
+	DisplayName string   `yaml:"display_name,omitempty"`
+	Provider    string   `yaml:"provider"` // "aws" or "oci"
+	Regions     []string `yaml:"regions,omitempty"`
 }
 
 // ConfigError represents an error related to configuration loading or parsing.

@@ -88,9 +88,6 @@ func newProfilesAddCmd() *cobra.Command {
 				DisplayName: displayName,
 				Provider:    provider,
 				Regions:     regions,
-				Credentials: config.Credential{
-					Type: "env",
-				},
 			}
 
 			config.AddProfile(cfg, profile)

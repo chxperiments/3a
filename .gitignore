@@ -9,3 +9,7 @@ bin/
 *.dylib
 *.test
 *.out
+
+# Kiro
+.kiro/specsagnostic-account-assessment/tasks.md
+.kiro/specsagnostic-account-assessment/requirements.md

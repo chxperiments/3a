@@ -114,11 +114,7 @@ func TestAddProfile(t *testing.T) {
 		Name:        "new-profile",
 		DisplayName: "New Profile",
 		Provider:    "oci",
-		Credentials: Credential{
-			Type:        "config_file",
-			ProfileName: "DEFAULT",
-		},
-		Regions: []string{"us-ashburn-1", "eu-frankfurt-1"},
+		Regions:     []string{"us-ashburn-1", "eu-frankfurt-1"},
 	}
 
 	AddProfile(cfg, newProfile)
