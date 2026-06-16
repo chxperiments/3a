@@ -13,13 +13,40 @@ import (
 // AllRules returns all AWS assessment rules.
 func AllRules() []assessment.Rule {
 	return []assessment.Rule{
+		// S3
 		&S3PublicAccessRule{},
-		&SecurityGroupOpenRule{},
-		&EBSUnencryptedRule{},
-		&RDSPublicRule{},
-		&IAMNoMFARule{},
-		&EKSPublicEndpointRule{},
 		&S3NoEncryptionRule{},
+		// Security Groups
+		&SecurityGroupOpenRule{},
+		// EBS
+		&EBSUnencryptedRule{},
+		// RDS
+		&RDSPublicRule{},
+		&RDSNoMultiAZRule{},
+		&RDSNoEncryptionRule{},
+		&RDSNoBackupRule{},
+		&RDSAutoMinorUpgradeRule{},
+		// IAM
+		&IAMNoMFARule{},
+		// EKS
+		&EKSPublicEndpointRule{},
+		// EC2
+		&EC2PublicIPRule{},
+		&EC2StoppedInstanceRule{},
+		&EC2NoIMDSv2Rule{},
+		// Lambda
+		&LambdaNoVPCRule{},
+		&LambdaOldRuntimeRule{},
+		&LambdaHighMemoryRule{},
+		&LambdaNoDeadLetterRule{},
+		// VPC / Networking
+		&VPCFlowLogsRule{},
+		&VPCDefaultSGRule{},
+		&SubnetPublicIPAutoAssignRule{},
+		// ALB / NLB
+		&ALBNoHTTPSRule{},
+		&ALBDeletionProtectionRule{},
+		&ALBAccessLogsRule{},
 	}
 }
 
