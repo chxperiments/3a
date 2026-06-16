@@ -147,6 +147,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.handleUp()
 		case "down", "j":
 			m.handleDown()
+		case "enter":
+			if m.activeView == ViewInventory {
+				m.inventory.toggleDetail()
+			}
+		case "esc":
+			if m.activeView == ViewInventory && m.inventory.showDetail {
+				m.inventory.showDetail = false
+				m.inventory.detailScroll = 0
+			}
 
 		// Region cycling in Inventory.
 		case "r":
@@ -223,10 +232,16 @@ func (m *Model) handleUp() {
 			m.overview.scrollOffset--
 		}
 	case ViewInventory:
-		if m.inventory.cursor > 0 {
-			m.inventory.cursor--
-			if m.inventory.cursor < m.inventory.offset {
-				m.inventory.offset = m.inventory.cursor
+		if m.inventory.showDetail {
+			if m.inventory.detailScroll > 0 {
+				m.inventory.detailScroll--
+			}
+		} else {
+			if m.inventory.cursor > 0 {
+				m.inventory.cursor--
+				if m.inventory.cursor < m.inventory.offset {
+					m.inventory.offset = m.inventory.cursor
+				}
 			}
 		}
 	case ViewFindings:
@@ -252,15 +267,19 @@ func (m *Model) handleDown() {
 	case ViewOverview:
 		m.overview.scrollOffset++
 	case ViewInventory:
-		filtered := m.inventory.filteredResources()
-		if m.inventory.cursor < len(filtered)-1 {
-			m.inventory.cursor++
-			maxVisible := m.height - 12
-			if maxVisible < 5 {
-				maxVisible = 5
-			}
-			if m.inventory.cursor >= m.inventory.offset+maxVisible {
-				m.inventory.offset++
+		if m.inventory.showDetail {
+			m.inventory.detailScroll++
+		} else {
+			filtered := m.inventory.filteredResources()
+			if m.inventory.cursor < len(filtered)-1 {
+				m.inventory.cursor++
+				maxVisible := m.height - 12
+				if maxVisible < 5 {
+					maxVisible = 5
+				}
+				if m.inventory.cursor >= m.inventory.offset+maxVisible {
+					m.inventory.offset++
+				}
 			}
 		}
 	case ViewFindings:
@@ -356,7 +375,11 @@ func (m Model) renderHelp() string {
 	base := "q:quit  ↑↓:scroll  1-5:views"
 	switch m.activeView {
 	case ViewInventory:
-		base += "  r/R:region  t:type  x:clear"
+		if m.inventory.showDetail {
+			base += "  esc/x:back  ↑↓:scroll"
+		} else {
+			base += "  enter:details  r/R:region  t:type  x:clear"
+		}
 	case ViewFindings:
 		base += "  c/h/m/l:severity  x:clear"
 	}
