@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -30,12 +31,58 @@ import (
 )
 
 var (
-	spinnerFrames = []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
-	stepStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#7C3AED")).Bold(true)
-	doneStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#10B981"))
-	failedStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#EF4444"))
-	dimStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("#6B7280"))
+	frames      = []string{"⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"}
+	accentStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#7C3AED")).Bold(true)
+	doneStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#10B981"))
+	failStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#EF4444"))
+	dimStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#6B7280"))
 )
+
+// spinner runs an animated spinner while a task executes.
+type spinner struct {
+	mu      sync.Mutex
+	msg     string
+	running bool
+	done    chan struct{}
+}
+
+func newSpinner(msg string) *spinner {
+	s := &spinner{msg: msg, done: make(chan struct{})}
+	s.start()
+	return s
+}
+
+func (s *spinner) start() {
+	s.running = true
+	go func() {
+		i := 0
+		for {
+			select {
+			case <-s.done:
+				return
+			default:
+				s.mu.Lock()
+				frame := accentStyle.Render(frames[i%len(frames)])
+				fmt.Printf("\r  %s %s", frame, s.msg)
+				s.mu.Unlock()
+				i++
+				time.Sleep(80 * time.Millisecond)
+			}
+		}
+	}()
+}
+
+func (s *spinner) succeed(result string) {
+	close(s.done)
+	s.running = false
+	fmt.Printf("\r  %s %s\n", doneStyle.Render("✓"), result)
+}
+
+func (s *spinner) fail(result string) {
+	close(s.done)
+	s.running = false
+	fmt.Printf("\r  %s %s\n", failStyle.Render("✗"), dimStyle.Render(result))
+}
 
 func newAssessCmd() *cobra.Command {
 	var connString string
@@ -57,25 +104,10 @@ func newAssessCmd() *cobra.Command {
 	return cmd
 }
 
-// step prints a step line with spinner-like prefix.
-func step(icon, msg string) {
-	fmt.Printf("  %s %s\n", stepStyle.Render(icon), msg)
-}
-
-// stepDone prints a completed step.
-func stepDone(msg string) {
-	fmt.Printf("  %s %s\n", doneStyle.Render("✓"), msg)
-}
-
-// stepFail prints a failed step (non-fatal).
-func stepFail(msg string) {
-	fmt.Printf("  %s %s\n", failedStyle.Render("✗"), dimStyle.Render(msg))
-}
-
 func runAssessment(profileName, connString string, noTUI bool) error {
 	ctx := context.Background()
 
-	// Suppress steampipe log spam during assessment.
+	// Suppress steampipe log noise.
 	log.SetOutput(io.Discard)
 	defer log.SetOutput(os.Stderr)
 
@@ -111,7 +143,7 @@ func runAssessment(profileName, connString string, noTUI bool) error {
 	}
 	defer store.Close()
 
-	// Create assessment record.
+	// Create assessment.
 	assessmentID := uuid.New().String()
 	now := time.Now()
 	a := &storage.Assessment{
@@ -128,60 +160,59 @@ func runAssessment(profileName, connString string, noTUI bool) error {
 
 	// Header.
 	fmt.Println()
-	fmt.Printf("  %s\n", stepStyle.Render("3A — Agnostic Account Assessment"))
-	fmt.Printf("  %s\n", dimStyle.Render(fmt.Sprintf("Profile: %s | Provider: %s | ID: %s", profileName, profile.Provider, assessmentID[:8])))
-	fmt.Println()
+	fmt.Printf("  %s\n", accentStyle.Render("━━━ 3A — Agnostic Account Assessment ━━━"))
+	fmt.Printf("  %s\n\n", dimStyle.Render(fmt.Sprintf("Profile: %s  Provider: %s  ID: %s", profileName, profile.Provider, assessmentID[:8])))
 
-	// Step 1: Connect to Steampipe.
-	step("→", "Connecting to Steampipe...")
+	// Step 1: Connect.
+	sp1 := newSpinner("Connecting to Steampipe...")
 	sp, err := steampipe.NewSteampipeProvider(connString, profile.Provider)
 	if err != nil {
+		sp1.fail("Connection failed")
 		return fmt.Errorf("creating steampipe provider: %w", err)
 	}
 	defer sp.Close()
-
 	if err := sp.Authenticate(ctx); err != nil {
-		stepFail("Connection failed")
+		sp1.fail("Connection failed")
 		return fmt.Errorf("connecting to steampipe: %w", err)
 	}
+	sp1.succeed("Connected to Steampipe")
 
-	// Step 2: Validate profile.
-	step("→", "Validating credentials...")
+	// Step 2: Validate.
+	sp2 := newSpinner("Validating credentials...")
 	if err := sp.ValidateProfile(ctx); err != nil {
-		stepFail("Validation failed")
+		sp2.fail("Validation failed")
 		_ = store.UpdateAssessmentStatus(assessmentID, "failed", nil)
 		return fmt.Errorf("profile validation failed:\n\n%w", err)
 	}
-	stepDone("Credentials validated")
+	sp2.succeed("Credentials validated")
 
-	// Step 3: Discovery.
-	step("→", "Discovering resources...")
+	// Step 3: Discover.
+	sp3 := newSpinner("Discovering resources (this may take a moment)...")
 	engine := discovery.NewEngine(sp, store)
 	summary, err := engine.Run(ctx, assessmentID, profile.Regions)
 	if err != nil {
-		stepFail("Discovery failed")
+		sp3.fail("Discovery failed")
 		return fmt.Errorf("discovery failed: %w", err)
 	}
-
 	if summary.TotalResources == 0 {
+		sp3.fail("No resources found")
 		_ = store.UpdateAssessmentStatus(assessmentID, "failed", nil)
-		stepFail("No resources discovered")
-		return fmt.Errorf("discovery returned 0 resources — check Steampipe credentials and configuration")
+		return fmt.Errorf("discovery returned 0 resources — check Steampipe credentials")
 	}
-	stepDone(fmt.Sprintf("Discovered %d resources across %d regions", summary.TotalResources, len(summary.ByRegion)))
+	sp3.succeed(fmt.Sprintf("Discovered %d resources across %d regions", summary.TotalResources, len(summary.ByRegion)))
 
 	// Step 4: Architecture.
-	step("→", "Reconstructing architecture...")
+	sp4 := newSpinner("Reconstructing architecture...")
 	reconstructor := architecture.NewReconstructor(store, profile.Provider)
 	if err := reconstructor.Reconstruct(assessmentID); err != nil {
-		stepFail("Architecture: " + err.Error())
+		sp4.fail("Architecture: " + err.Error())
 	} else {
 		rels, _ := store.GetRelationshipsByAssessment(assessmentID)
-		stepDone(fmt.Sprintf("Mapped %d relationships", len(rels)))
+		sp4.succeed(fmt.Sprintf("Mapped %d relationships", len(rels)))
 	}
 
 	// Step 5: Assessment.
-	step("→", "Running security assessment...")
+	sp5 := newSpinner("Running security assessment...")
 	var rules []assessment.Rule
 	switch profile.Provider {
 	case "aws":
@@ -190,57 +221,55 @@ func runAssessment(profileName, connString string, noTUI bool) error {
 		rules = ocirules.AllRules()
 	}
 	assessEngine := assessment.NewEngine(store, rules)
-	if err := assessEngine.Run(ctx, assessmentID); err != nil {
-		stepFail("Assessment: " + err.Error())
-	}
+	_ = assessEngine.Run(ctx, assessmentID)
 	findings, _ := store.GetFindingsByAssessment(assessmentID)
-	stepDone(fmt.Sprintf("Evaluated rules — %d findings", len(findings)))
+	sp5.succeed(fmt.Sprintf("Security: %d findings", len(findings)))
 
 	// Step 6: Sizing.
-	step("→", "Analyzing infrastructure sizing...")
+	sp6 := newSpinner("Analyzing infrastructure sizing...")
 	sizingAnalyzer := sizing.NewAnalyzer(store)
 	sizingSummary, err := sizingAnalyzer.Analyze(assessmentID)
 	if err != nil {
-		stepFail("Sizing: " + err.Error())
+		sp6.fail("Sizing unavailable")
 	} else {
-		stepDone(fmt.Sprintf("Sizing: %d vCPUs, %.1f GB memory", sizingSummary.TotalVCPUs, sizingSummary.TotalMemoryGB))
+		sp6.succeed(fmt.Sprintf("Sizing: %d vCPUs, %.1f GB memory", sizingSummary.TotalVCPUs, sizingSummary.TotalMemoryGB))
 	}
 
 	// Step 7: Cost.
-	step("→", "Estimating costs...")
+	sp7 := newSpinner("Estimating costs...")
 	costEstimator := cost.NewEstimator(store)
 	costSummary, err := costEstimator.Estimate(assessmentID)
 	if err != nil {
-		stepFail("Cost: " + err.Error())
+		sp7.fail("Cost estimation unavailable")
 	} else {
-		stepDone(fmt.Sprintf("Estimated $%.2f/month", costSummary.TotalMonthlyCost))
+		sp7.succeed(fmt.Sprintf("Estimated $%.2f/month", costSummary.TotalMonthlyCost))
 	}
 
 	// Step 8: Checklist.
-	step("→", "Generating checklist...")
+	sp8 := newSpinner("Generating checklist...")
 	checkEngine := checklist.NewEngine(store)
 	checkSummary, err := checkEngine.Generate(assessmentID)
 	if err != nil {
-		stepFail("Checklist: " + err.Error())
+		sp8.fail("Checklist unavailable")
 	} else {
-		stepDone(fmt.Sprintf("Checklist: %d pass, %d fail, %d warn", checkSummary.PassCount, checkSummary.FailCount, checkSummary.WarnCount))
+		sp8.succeed(fmt.Sprintf("Checklist: %d pass, %d fail, %d warn", checkSummary.PassCount, checkSummary.FailCount, checkSummary.WarnCount))
 	}
 
-	// Mark complete.
+	// Done.
 	completedAt := time.Now()
 	_ = store.UpdateAssessmentStatus(assessmentID, "completed", &completedAt)
-
 	elapsed := time.Since(now).Round(time.Millisecond)
+
 	fmt.Println()
-	fmt.Printf("  %s %s\n", doneStyle.Render("✓ Assessment complete"), dimStyle.Render(fmt.Sprintf("(%s)", elapsed)))
-	fmt.Println()
+	fmt.Printf("  %s  %s\n\n", doneStyle.Render("✓ Assessment complete"), dimStyle.Render(elapsed.String()))
 
 	if noTUI {
 		return nil
 	}
 
-	// Launch TUI.
-	fmt.Printf("  %s\n\n", dimStyle.Render("Launching interactive view... (press q to quit)"))
+	fmt.Printf("  %s\n\n", dimStyle.Render("Launching TUI... (q to quit)"))
+	time.Sleep(300 * time.Millisecond)
+
 	model := tui.NewModel(store, assessmentID)
 	p := tea.NewProgram(model, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {

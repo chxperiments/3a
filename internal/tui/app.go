@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/chxmxii/3a/internal/storage"
@@ -217,6 +218,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *Model) handleUp() {
 	switch m.activeView {
+	case ViewOverview:
+		if m.overview.scrollOffset > 0 {
+			m.overview.scrollOffset--
+		}
 	case ViewInventory:
 		if m.inventory.cursor > 0 {
 			m.inventory.cursor--
@@ -244,6 +249,8 @@ func (m *Model) handleUp() {
 
 func (m *Model) handleDown() {
 	switch m.activeView {
+	case ViewOverview:
+		m.overview.scrollOffset++
 	case ViewInventory:
 		filtered := m.inventory.filteredResources()
 		if m.inventory.cursor < len(filtered)-1 {
@@ -285,24 +292,38 @@ func (m Model) View() string {
 		return "\n  Loading assessment data...\n"
 	}
 
-	var content string
-	switch m.activeView {
-	case ViewOverview:
-		content = m.overview.render(m.width, m.height)
-	case ViewInventory:
-		content = m.inventory.render(m.width, m.height)
-	case ViewArchitecture:
-		content = m.architecture.render(m.width, m.height)
-	case ViewFindings:
-		content = m.findings.render(m.width, m.height)
-	case ViewCost:
-		content = m.cost.render(m.width, m.height)
-	}
-
+	// Fixed layout: nav (2 lines) + content (fills) + help (1 line).
 	nav := m.renderNav()
 	help := m.renderHelp()
 
-	return nav + "\n" + content + "\n" + help
+	// Content area height = total height - nav (2) - help (2) - borders.
+	contentHeight := m.height - 5
+	if contentHeight < 10 {
+		contentHeight = 10
+	}
+
+	var content string
+	switch m.activeView {
+	case ViewOverview:
+		content = m.overview.render(m.width, contentHeight)
+	case ViewInventory:
+		content = m.inventory.render(m.width, contentHeight)
+	case ViewArchitecture:
+		content = m.architecture.render(m.width, contentHeight)
+	case ViewFindings:
+		content = m.findings.render(m.width, contentHeight)
+	case ViewCost:
+		content = m.cost.render(m.width, contentHeight)
+	}
+
+	// Truncate content if it exceeds available height.
+	contentLines := strings.Split(content, "\n")
+	if len(contentLines) > contentHeight {
+		contentLines = contentLines[:contentHeight]
+	}
+	content = strings.Join(contentLines, "\n")
+
+	return nav + "\n" + content + "\n\n" + help
 }
 
 func (m Model) renderNav() string {
