@@ -99,6 +99,7 @@ const (
 	ResourceTypeEBSVolume     ResourceType = "ebs_volume"
 	ResourceTypeTargetGroup   ResourceType = "target_group"
 	ResourceTypeEKSNodeGroup  ResourceType = "eks_node_group"
+	ResourceTypeEFS          ResourceType = "efs_file_system"
 )
 
 // Common OCI resource types

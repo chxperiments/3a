@@ -116,9 +116,3 @@ tasks:
       - task: build
       - cmd: grep -q "$(pwd)/bin" ~/.bashrc 2>/dev/null || echo 'export PATH="{{.ROOT_DIR}}/bin:$PATH"' >> ~/.bashrc
         ignore_error: true
-      - echo ""
-      - echo "Setup complete. Next steps:"
-      - echo "   1. Reload shell:     source ~/.bashrc"
-      - echo "   2. Start steampipe:  steampipe service start"
-      - echo "   3. Add a profile:    3a profiles add <name> --aws-profile <profile>"
-      - echo "   4. Run assessment:   3a assess <profile-name>"
