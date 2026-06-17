@@ -109,13 +109,16 @@ tasks:
         ignore_error: true
 
   setup:
-    desc: First-time setup (install deps, create config dir)
+    desc: First-time setup (install deps, create config dir, add bin to PATH)
     cmds:
       - go mod download
       - mkdir -p ~/.3a
       - task: build
+      - cmd: grep -q "$(pwd)/bin" ~/.bashrc 2>/dev/null || echo 'export PATH="{{.ROOT_DIR}}/bin:$PATH"' >> ~/.bashrc
+        ignore_error: true
       - echo ""
-      - echo "✅ Setup complete. Next steps:"
-      - echo "   1. Start steampipe:  steampipe service start"
-      - echo "   2. Add a profile:    ./bin/3a profiles add"
-      - echo "   3. Run assessment:   ./bin/3a assess <profile-name>"
+      - echo "Setup complete. Next steps:"
+      - echo "   1. Reload shell:     source ~/.bashrc"
+      - echo "   2. Start steampipe:  steampipe service start"
+      - echo "   3. Add a profile:    3a profiles add <name> --aws-profile <profile>"
+      - echo "   4. Run assessment:   3a assess <profile-name>"

@@ -26,7 +26,8 @@ type SteampipeConfig struct {
 type AccountProfile struct {
 	Name        string   `yaml:"name"`
 	DisplayName string   `yaml:"display_name,omitempty"`
-	Provider    string   `yaml:"provider"` // "aws" or "oci"
+	Provider    string   `yaml:"provider"`          // "aws" or "oci"
+	AwsProfile  string   `yaml:"aws_profile,omitempty"` // AWS credentials profile name (used by Steampipe)
 	Regions     []string `yaml:"regions,omitempty"`
 }
 
@@ -55,6 +56,19 @@ func DefaultConfigPath() string {
 		return filepath.Join("~", ".3a", "config.yaml")
 	}
 	return filepath.Join(home, ".3a", "config.yaml")
+}
+
+// EnsureConfigDir creates ~/.3a if it doesn't exist and returns the path.
+func EnsureConfigDir() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("cannot determine home directory: %w", err)
+	}
+	dir := filepath.Join(home, ".3a")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return "", fmt.Errorf("cannot create config directory %s: %w", dir, err)
+	}
+	return dir, nil
 }
 
 // Load reads and parses the YAML configuration file at the given path.

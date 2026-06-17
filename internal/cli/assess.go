@@ -111,6 +111,11 @@ func runAssessment(profileName, connString string, noTUI bool) error {
 	log.SetOutput(io.Discard)
 	defer log.SetOutput(os.Stderr)
 
+	// Ensure ~/.3a directory exists.
+	if _, err := config.EnsureConfigDir(); err != nil {
+		return err
+	}
+
 	// Load config.
 	cfgPath := config.DefaultConfigPath()
 	cfg, err := config.Load(cfgPath)

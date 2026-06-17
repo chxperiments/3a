@@ -37,14 +37,18 @@ func newProfilesListCmd() *cobra.Command {
 				return nil
 			}
 
-			fmt.Printf("%-20s %-10s %-30s\n", "NAME", "PROVIDER", "REGIONS")
-			fmt.Printf("%-20s %-10s %-30s\n", "----", "--------", "-------")
+			fmt.Printf("%-20s %-10s %-15s %-30s\n", "NAME", "PROVIDER", "AWS PROFILE", "REGIONS")
+			fmt.Printf("%-20s %-10s %-15s %-30s\n", "----", "--------", "-----------", "-------")
 			for _, p := range profiles {
 				regions := "all"
 				if len(p.Regions) > 0 {
 					regions = fmt.Sprintf("%v", p.Regions)
 				}
-				fmt.Printf("%-20s %-10s %-30s\n", p.Name, p.Provider, regions)
+				awsProf := "-"
+				if p.AwsProfile != "" {
+					awsProf = p.AwsProfile
+				}
+				fmt.Printf("%-20s %-10s %-15s %-30s\n", p.Name, p.Provider, awsProf, regions)
 			}
 			return nil
 		},
@@ -55,6 +59,7 @@ func newProfilesAddCmd() *cobra.Command {
 	var provider string
 	var regions []string
 	var displayName string
+	var awsProfile string
 
 	cmd := &cobra.Command{
 		Use:   "add <name>",
@@ -62,6 +67,11 @@ func newProfilesAddCmd() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			name := args[0]
+
+			// Ensure ~/.3a exists.
+			if _, err := config.EnsureConfigDir(); err != nil {
+				return err
+			}
 
 			cfgPath := config.DefaultConfigPath()
 			cfg, err := config.Load(cfgPath)
@@ -87,6 +97,7 @@ func newProfilesAddCmd() *cobra.Command {
 				Name:        name,
 				DisplayName: displayName,
 				Provider:    provider,
+				AwsProfile:  awsProfile,
 				Regions:     regions,
 			}
 
@@ -97,6 +108,10 @@ func newProfilesAddCmd() *cobra.Command {
 			}
 
 			fmt.Printf("Profile %q added successfully.\n", name)
+			if awsProfile != "" {
+				fmt.Printf("  AWS credentials profile: %s\n", awsProfile)
+				fmt.Printf("  Note: Ensure Steampipe's aws.spc uses the same profile.\n")
+			}
 			return nil
 		},
 	}
@@ -104,6 +119,7 @@ func newProfilesAddCmd() *cobra.Command {
 	cmd.Flags().StringVar(&provider, "provider", "aws", "cloud provider (aws or oci)")
 	cmd.Flags().StringSliceVar(&regions, "regions", []string{"us-east-1"}, "regions to assess")
 	cmd.Flags().StringVar(&displayName, "display-name", "", "display name for the profile")
+	cmd.Flags().StringVar(&awsProfile, "aws-profile", "", "AWS credentials profile name (from ~/.aws/credentials)")
 
 	return cmd
 }
