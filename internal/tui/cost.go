@@ -27,7 +27,6 @@ func (v *costView) render(width, height int) string {
 
 	lines := v.buildLines()
 
-	// Apply scroll.
 	maxRows := height - 6
 	if maxRows < 10 {
 		maxRows = 10
@@ -78,12 +77,17 @@ func (v *costView) buildLines() []string {
 	}
 
 	// Total.
-	lines = append(lines, headerStyle.Render("  Monthly Total"))
-	lines = append(lines, fmt.Sprintf("    $%.2f/month (~$%.2f/year)", totalCost, totalCost*12))
+	lines = append(lines, headerStyle.Render("  ┌─ Monthly Total"))
+	lines = append(lines, fmt.Sprintf("  │ %s %s", keyStyle.Render("Monthly:"), passStyle.Render(fmt.Sprintf("$%.2f", totalCost))))
+	lines = append(lines, fmt.Sprintf("  │ %s %s", keyStyle.Render("Annual: "), dimNavStyle.Render(fmt.Sprintf("~$%.2f", totalCost*12))))
+	lines = append(lines, "  └─")
 	lines = append(lines, "")
 
 	// By category.
-	lines = append(lines, headerStyle.Render("  Breakdown by Category"))
+	lines = append(lines, headerStyle.Render("  ┌─ Breakdown by Category"))
+	lines = append(lines, fmt.Sprintf("  │ %s  %s  %s  %s", keyStyle.Render("CATEGORY   "), keyStyle.Render("COST       "), keyStyle.Render(" %  "), keyStyle.Render("BAR")))
+	lines = append(lines, "  │ "+strings.Repeat("─", 55))
+
 	type catCost struct {
 		name string
 		cost float64
@@ -98,13 +102,19 @@ func (v *costView) buildLines() []string {
 		if totalCost > 0 {
 			pct = (cat.cost / totalCost) * 100
 		}
-		bar := strings.Repeat("█", int(pct/5))
-		lines = append(lines, fmt.Sprintf("    %-12s $%8.2f  %4.1f%%  %s", cat.name, cat.cost, pct, dimNavStyle.Render(bar)))
+		barLen := int(pct / 3)
+		if barLen < 1 && cat.cost > 0 {
+			barLen = 1
+		}
+		bar := passStyle.Render(strings.Repeat("█", barLen))
+		costStr := fmt.Sprintf("$%.2f", cat.cost)
+		lines = append(lines, fmt.Sprintf("  │ %-12s %s  %s  %s", cat.name, valueStyle.Render(fmt.Sprintf("%10s", costStr)), dimNavStyle.Render(fmt.Sprintf("%5.1f%%", pct)), bar))
 	}
+	lines = append(lines, "  └─")
 	lines = append(lines, "")
 
 	// Top cost drivers.
-	lines = append(lines, headerStyle.Render("  Top Cost Drivers"))
+	lines = append(lines, headerStyle.Render("  ┌─ Top Cost Drivers"))
 	nameMap := make(map[string]string)
 	for _, r := range v.resources {
 		nameMap[r.ResourceID] = r.Name
@@ -133,19 +143,27 @@ func (v *costView) buildLines() []string {
 		if len(name) > 30 {
 			name = name[:27] + "..."
 		}
-		lines = append(lines, fmt.Sprintf("    %2d. %-30s %-14s $%.2f/mo", i+1, name, item.resType, item.cost))
+		costColor := normalStyle
+		if item.cost > 100 {
+			costColor = severityHighStyle
+		} else if item.cost > 50 {
+			costColor = severityMediumStyle
+		}
+		lines = append(lines, fmt.Sprintf("  │ %2d. %-30s %s  %s", i+1, name, dimNavStyle.Render(fmt.Sprintf("%-14s", item.resType)), costColor.Render(fmt.Sprintf("$%.2f/mo", item.cost))))
 	}
+	lines = append(lines, "  └─")
 	lines = append(lines, "")
 
 	// Optimization.
 	if len(idleResources) > 0 || len(oversizedResources) > 0 {
-		lines = append(lines, headerStyle.Render("  Optimization Opportunities"))
+		lines = append(lines, headerStyle.Render("  ┌─ Optimization Opportunities"))
 		if len(idleResources) > 0 {
-			lines = append(lines, warnStyle.Render(fmt.Sprintf("    ⚠ %d potentially idle resource(s)", len(idleResources))))
+			lines = append(lines, warnStyle.Render(fmt.Sprintf("  │ ⚠ %d potentially idle resource(s)", len(idleResources))))
 		}
 		if len(oversizedResources) > 0 {
-			lines = append(lines, warnStyle.Render(fmt.Sprintf("    ⚠ %d potentially oversized resource(s)", len(oversizedResources))))
+			lines = append(lines, warnStyle.Render(fmt.Sprintf("  │ ⚠ %d potentially oversized resource(s)", len(oversizedResources))))
 		}
+		lines = append(lines, "  └─")
 	}
 
 	return lines
