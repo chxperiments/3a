@@ -3,8 +3,24 @@ name: CI
 on:
   push:
     branches: [master, main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'RELEASE_NOTES.md'
+      - 'ROADMAP.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
+      - '.gitignore'
   pull_request:
     branches: [master, main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'RELEASE_NOTES.md'
+      - 'ROADMAP.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
+      - '.gitignore'
 
 jobs:
   build:
