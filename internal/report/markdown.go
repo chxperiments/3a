@@ -26,8 +26,8 @@ func renderMarkdown(data *ReportData) string {
 	b.WriteString("\n")
 
 	b.WriteString("### Finding Summary\n\n")
-	b.WriteString(fmt.Sprintf("| Severity | Count |\n"))
-	b.WriteString(fmt.Sprintf("|----------|-------|\n"))
+	b.WriteString("| Severity | Count |\n")
+	b.WriteString("|----------|-------|\n")
 	b.WriteString(fmt.Sprintf("| Critical | %d |\n", exec.CriticalCount))
 	b.WriteString(fmt.Sprintf("| High     | %d |\n", exec.HighCount))
 	b.WriteString(fmt.Sprintf("| Medium   | %d |\n", exec.MediumCount))
