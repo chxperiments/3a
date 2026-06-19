@@ -84,23 +84,31 @@ func (v *architectureView) render(width, height int) string {
 	if maxRows < 5 {
 		maxRows = 5
 	}
-	if v.scrollOffset > len(lines)-maxRows {
-		v.scrollOffset = max(0, len(lines)-maxRows)
+	offset := v.scrollOffset
+	maxOffset := len(lines) - maxRows
+	if maxOffset < 0 {
+		maxOffset = 0
 	}
-	end := v.scrollOffset + maxRows
+	if offset > maxOffset {
+		offset = maxOffset
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	end := offset + maxRows
 	if end > len(lines) {
 		end = len(lines)
 	}
 
-	for i := v.scrollOffset; i < end; i++ {
+	for i := offset; i < end; i++ {
 		b.WriteString(lines[i])
 		b.WriteString("\n")
 	}
 
 	if len(lines) > maxRows {
 		pct := 0
-		if len(lines)-maxRows > 0 {
-			pct = (v.scrollOffset * 100) / (len(lines) - maxRows)
+		if maxOffset > 0 {
+			pct = (offset * 100) / maxOffset
 		}
 		b.WriteString(dimNavStyle.Render(fmt.Sprintf("\n  ↕ scroll %d%% (%d lines)", pct, len(lines))))
 	}
