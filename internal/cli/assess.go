@@ -75,13 +75,14 @@ func (s *spinner) start() {
 func (s *spinner) succeed(result string) {
 	close(s.done)
 	s.running = false
-	fmt.Printf("\r  %s %s\n", doneStyle.Render("✓"), result)
+	// Clear the full line then print result.
+	fmt.Printf("\r\033[K  %s %s\n", doneStyle.Render("✓"), result)
 }
 
 func (s *spinner) fail(result string) {
 	close(s.done)
 	s.running = false
-	fmt.Printf("\r  %s %s\n", failStyle.Render("✗"), dimStyle.Render(result))
+	fmt.Printf("\r\033[K  %s %s\n", failStyle.Render("✗"), dimStyle.Render(result))
 }
 
 func newAssessCmd() *cobra.Command {

@@ -308,17 +308,17 @@ func (v *inventoryView) buildSGDetail(r *storage.Resource, width int) []string {
 
 	// Basic info.
 	lines = append(lines, headerStyle.Render("  ┌─ Info"))
-	lines = append(lines, fmt.Sprintf("  │ Group ID:    %s", getDetailStr(meta, "group_id")))
-	lines = append(lines, fmt.Sprintf("  │ Name:        %s", getDetailStr(meta, "group_name")))
-	lines = append(lines, fmt.Sprintf("  │ Description: %s", getDetailStr(meta, "description")))
-	lines = append(lines, fmt.Sprintf("  │ VPC:         %s", getDetailStr(meta, "vpc_id")))
-	lines = append(lines, fmt.Sprintf("  │ Region:      %s", r.Region))
+	lines = append(lines, fmt.Sprintf("  │ %s %s", keyStyle.Render("Group ID:   "), getDetailStr(meta, "group_id")))
+	lines = append(lines, fmt.Sprintf("  │ %s %s", keyStyle.Render("Name:       "), getDetailStr(meta, "group_name")))
+	lines = append(lines, fmt.Sprintf("  │ %s %s", keyStyle.Render("Description:"), getDetailStr(meta, "description")))
+	lines = append(lines, fmt.Sprintf("  │ %s %s", keyStyle.Render("VPC:        "), getDetailStr(meta, "vpc_id")))
+	lines = append(lines, fmt.Sprintf("  │ %s %s", keyStyle.Render("Region:     "), r.Region))
 	lines = append(lines, "  └─")
 	lines = append(lines, "")
 
 	// Inbound rules.
 	lines = append(lines, headerStyle.Render("  ┌─ Inbound Rules"))
-	lines = append(lines, fmt.Sprintf("  │ %-10s %-12s %-22s %s", "PROTO", "PORTS", "SOURCE", "DESCRIPTION"))
+	lines = append(lines, fmt.Sprintf("  │ %s  %s  %s  %s", keyStyle.Render("PROTO     "), keyStyle.Render("PORTS      "), keyStyle.Render("SOURCE                "), keyStyle.Render("DESCRIPTION")))
 	lines = append(lines, "  │ "+strings.Repeat("─", 70))
 
 	ipPerms, _ := meta["ip_permissions"].([]any)
@@ -399,7 +399,7 @@ func (v *inventoryView) buildSGDetail(r *storage.Resource, width int) []string {
 
 	// Outbound rules.
 	lines = append(lines, headerStyle.Render("  ┌─ Outbound Rules"))
-	lines = append(lines, fmt.Sprintf("  │ %-10s %-12s %-22s %s", "PROTO", "PORTS", "DESTINATION", "DESCRIPTION"))
+	lines = append(lines, fmt.Sprintf("  │ %s  %s  %s  %s", keyStyle.Render("PROTO     "), keyStyle.Render("PORTS      "), keyStyle.Render("DESTINATION           "), keyStyle.Render("DESCRIPTION")))
 	lines = append(lines, "  │ "+strings.Repeat("─", 70))
 
 	ipPermsEgress, _ := meta["ip_permissions_egress"].([]any)
@@ -597,15 +597,15 @@ func (v *inventoryView) buildRouteTableDetail(r *storage.Resource, width int) []
 
 	// Basic info.
 	lines = append(lines, headerStyle.Render("  ┌─ Info"))
-	lines = append(lines, fmt.Sprintf("  │ Route Table ID: %s", getDetailStr(meta, "route_table_id")))
-	lines = append(lines, fmt.Sprintf("  │ VPC:            %s", getDetailStr(meta, "vpc_id")))
-	lines = append(lines, fmt.Sprintf("  │ Region:         %s", r.Region))
+	lines = append(lines, fmt.Sprintf("  │ %s %s", keyStyle.Render("Route Table ID:"), getDetailStr(meta, "route_table_id")))
+	lines = append(lines, fmt.Sprintf("  │ %s %s", keyStyle.Render("VPC:           "), getDetailStr(meta, "vpc_id")))
+	lines = append(lines, fmt.Sprintf("  │ %s %s", keyStyle.Render("Region:        "), r.Region))
 	lines = append(lines, "  └─")
 	lines = append(lines, "")
 
 	// Routes.
 	lines = append(lines, headerStyle.Render("  ┌─ Routes"))
-	lines = append(lines, fmt.Sprintf("  │ %-20s %-30s %-10s", "DESTINATION", "TARGET", "STATE"))
+	lines = append(lines, fmt.Sprintf("  │ %s  %s  %s", keyStyle.Render("DESTINATION         "), keyStyle.Render("TARGET                        "), keyStyle.Render("STATE")))
 	lines = append(lines, "  │ "+strings.Repeat("─", 65))
 
 	routes, _ := meta["routes"].([]any)
@@ -698,10 +698,10 @@ func (v *inventoryView) buildGenericDetail(r *storage.Resource, width int) []str
 
 	// Core fields.
 	lines = append(lines, headerStyle.Render("  ┌─ Identity"))
-	lines = append(lines, fmt.Sprintf("  │ ID:     %s", r.ResourceID))
-	lines = append(lines, fmt.Sprintf("  │ Type:   %s", r.ResourceType))
-	lines = append(lines, fmt.Sprintf("  │ Name:   %s", r.Name))
-	lines = append(lines, fmt.Sprintf("  │ Region: %s", r.Region))
+	lines = append(lines, fmt.Sprintf("  │ %s %s", keyStyle.Render("ID:    "), r.ResourceID))
+	lines = append(lines, fmt.Sprintf("  │ %s %s", keyStyle.Render("Type:  "), r.ResourceType))
+	lines = append(lines, fmt.Sprintf("  │ %s %s", keyStyle.Render("Name:  "), r.Name))
+	lines = append(lines, fmt.Sprintf("  │ %s %s", keyStyle.Render("Region:"), r.Region))
 	lines = append(lines, "  └─")
 	lines = append(lines, "")
 
@@ -718,7 +718,7 @@ func (v *inventoryView) buildGenericDetail(r *storage.Resource, width int) []str
 			if len(val) > 60 {
 				val = val[:57] + "..."
 			}
-			lines = append(lines, fmt.Sprintf("  │ %-25s %s", k+":", val))
+			lines = append(lines, fmt.Sprintf("  │ %s %s", keyStyle.Render(fmt.Sprintf("%-25s", k+":")), valueStyle.Render(val)))
 		}
 		lines = append(lines, "  └─")
 		lines = append(lines, "")
