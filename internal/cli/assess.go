@@ -306,14 +306,3 @@ func resolveDBPath(path string) string {
 	}
 	return path
 }
-
-func canaryTableForProvider(providerType string) string {
-	switch providerType {
-	case "aws":
-		return "aws_account"
-	case "oci":
-		return "oci_identity_compartment"
-	default:
-		return "unknown"
-	}
-}
