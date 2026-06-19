@@ -1,355 +1,362 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3A — Agnostic Account Assessment</title>
-  <meta name="description" content="Terminal-first cloud security and cost analysis for AWS and OCI.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #09090b;
-      --surface: #111113;
-      --surface-2: #18181b;
-      --border: #222225;
-      --border-hover: #3f3f46;
-      --text: #fafafa;
-      --muted: #71717a;
-      --accent: #8b5cf6;
-      --accent-dim: rgba(139, 92, 246, 0.08);
-      --green: #22c55e;
-      --cyan: #06b6d4;
-      --radius: 14px;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3a</title>
+<meta name="description" content="Terminal-first cloud security and cost analysis for AWS and OCI.">
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #08090b;
+    --surface: #0e1012;
+    --line: #1d2024;
+    --line-soft: #16181b;
+    --text: #e9eaec;
+    --muted: #71757c;
+    --muted-dim: #4a4d52;
+    --accent: #a78bfa;
+    --accent-soft: rgba(167, 139, 250, 0.1);
+    --ok: #4ade80;
+  }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    body {
-      font-family: 'Inter', -apple-system, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.7;
-      overflow-x: hidden;
-    }
+  html { background: var(--bg); }
 
-    .container {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 0 24px;
-    }
+  body {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.7;
+    cursor: url('assets/cursor.png'), auto;
+  }
 
-    /* Hero */
-    header {
-      padding: 100px 0 48px;
-      text-align: center;
-    }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(255,255,255,0.012) 27px, rgba(255,255,255,0.012) 28px);
+    z-index: 0;
+  }
 
-    .logo-img {
-      width: 200px;
-      height: 200px;
-      margin-bottom: 32px;
-      border-radius: 28px;
-    }
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 28px;
+    position: relative;
+    z-index: 1;
+  }
 
-    h1 {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 2.6rem;
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      color: var(--text);
-    }
+  a { color: inherit; }
 
-    .tagline {
-      font-size: 1.1rem;
-      color: var(--muted);
-      margin-top: 12px;
-      max-width: 480px;
-      margin-left: auto;
-      margin-right: auto;
-    }
+  /* ---------- Hero ---------- */
 
-    /* Install */
-    .install-section {
-      margin: 48px 0;
-      text-align: center;
-    }
+  header {
+    padding: 96px 0 0;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
 
-    .install-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px 28px;
-      display: inline-flex;
-      align-items: center;
-      gap: 14px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.85rem;
-      color: var(--green);
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
+  .mark {
+    width: 100%;
+    margin-bottom: 36px;
+    position: relative;
+  }
 
-    .install-box:hover {
-      border-color: var(--accent);
-      box-shadow: 0 0 40px var(--accent-dim);
-    }
+  .mark img { display: block; margin: 0 auto; }
 
-    .install-box .prompt { color: var(--muted); user-select: none; }
-    .install-box .copy-btn {
-      padding: 4px 10px;
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      color: var(--muted);
-      font-size: 0.7rem;
-      font-family: 'Inter', sans-serif;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .install-box:hover .copy-btn { border-color: var(--accent); color: var(--accent); }
+  .eyebrow {
+    font-size: 0.72rem;
+    color: var(--muted-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 22px;
+  }
 
-    .install-hint {
-      color: var(--muted);
-      font-size: 0.75rem;
-      margin-top: 10px;
-    }
+  .eyebrow .sep { color: var(--line); margin: 0 8px; }
 
-    /* Terminal */
-    .terminal {
-      margin: 56px 0;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-size: clamp(2.6rem, 6vw, 3.6rem);
+    line-height: 1.04;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    max-width: 13ch;
+    margin: 0 auto;
+  }
 
-    .terminal-bar {
-      padding: 12px 16px;
-      background: var(--surface-2);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 7px;
-    }
+  h1 em {
+    font-style: italic;
+    font-weight: 500;
+    color: var(--accent);
+  }
 
-    .terminal-dot { width: 11px; height: 11px; border-radius: 50%; }
-    .terminal-dot:nth-child(1) { background: #ef4444; }
-    .terminal-dot:nth-child(2) { background: #eab308; }
-    .terminal-dot:nth-child(3) { background: #22c55e; }
+  .tagline {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+    color: var(--muted);
+    margin: 22px auto 0;
+    max-width: 46ch;
+  }
 
-    .terminal-body {
-      padding: 24px 28px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.78rem;
-      line-height: 1.9;
-      color: var(--muted);
-      white-space: pre;
-      overflow-x: auto;
-    }
+  /* ---------- Install ---------- */
 
-    .terminal-body .hi { color: var(--accent); }
-    .terminal-body .ok { color: var(--green); }
-    .terminal-body .dim { color: #3f3f46; }
+  .install {
+    margin: 44px 0 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
 
-    /* Features — horizontal scroll */
-    .features-wrapper {
-      margin: 64px 0;
-    }
+  .install-box {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.82rem;
+    color: var(--ok);
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+    max-width: 100%;
+    overflow-x: auto;
+  }
 
-    .features-wrapper h2 {
-      font-size: 1.3rem;
-      font-weight: 600;
-      margin-bottom: 20px;
-      padding-left: 4px;
-    }
+  .install-box:hover { border-color: #2a2d31; }
 
-    .features {
-      display: flex;
-      gap: 14px;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      padding-bottom: 16px;
-      -webkit-overflow-scrolling: touch;
-    }
+  .install-box .prompt { color: var(--muted-dim); user-select: none; flex-shrink: 0; }
+  .install-box .cmd { white-space: nowrap; flex: 1; color: var(--accent); }
 
-    .features::-webkit-scrollbar { height: 6px; }
-    .features::-webkit-scrollbar-track { background: var(--surface); border-radius: 3px; }
-    .features::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .install-box .copy-btn {
+    flex-shrink: 0;
+    padding: 6px 8px;
+    background: var(--line-soft);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: all 0.15s;
+  }
+  .install-box:hover .copy-btn { border-color: var(--accent); color: var(--accent); }
 
-    .feature {
-      flex: 0 0 260px;
-      scroll-snap-align: start;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 28px 24px;
-      transition: all 0.15s ease;
-    }
+  .install-hint {
+    color: var(--muted-dim);
+    font-size: 0.76rem;
+    margin-top: 12px;
+    padding-left: 2px;
+  }
 
-    .feature:hover {
-      border-color: var(--border-hover);
-      background: var(--surface-2);
-    }
+  /* ---------- CTA row ---------- */
 
-    .feature-num {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.7rem;
-      color: var(--accent);
-      margin-bottom: 12px;
-      font-weight: 500;
-    }
+  .actions {
+    margin-top: 36px;
+    display: flex;
+    align-items: center;
+    gap: 22px;
+  }
 
-    .feature h3 {
-      font-size: 0.95rem;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
+  .btn-gh {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 11px 18px;
+    background: var(--text);
+    color: var(--bg);
+    text-decoration: none;
+    border-radius: 7px;
+    font-weight: 600;
+    font-size: 0.82rem;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .btn-gh:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.35); }
+  .btn-gh svg { width: 16px; height: 16px; }
 
-    .feature p {
-      font-size: 0.8rem;
-      color: var(--muted);
-      line-height: 1.5;
-    }
+  .link-secondary {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 2px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .link-secondary:hover { color: var(--text); border-color: var(--muted); }
 
-    /* CTA */
-    .cta {
-      text-align: center;
-      margin: 72px 0;
-      padding: 56px 32px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-    }
 
-    .cta h2 { font-size: 1.4rem; margin-bottom: 10px; }
-    .cta p { color: var(--muted); margin-bottom: 28px; font-size: 0.9rem; }
+  /* ---------- Media slot ---------- */
 
-    .btn {
-      display: inline-block;
-      padding: 12px 32px;
-      background: var(--accent);
-      color: #fff;
-      text-decoration: none;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 0.9rem;
-      transition: all 0.15s;
-    }
+  .media {
+    margin: 28px 0 0;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+    aspect-ratio: 16 / 9.5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
 
-    .btn:hover { box-shadow: 0 4px 24px rgba(139, 92, 246, 0.25); transform: translateY(-1px); }
+  .media video,
+  .media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
 
-    /* Footer */
-    footer {
-      text-align: center;
-      padding: 48px 0;
-      border-top: 1px solid var(--border);
-    }
+  .media-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    color: var(--muted-dim);
+  }
 
-    footer .links { display: flex; justify-content: center; gap: 24px; margin-bottom: 14px; }
-    footer a { color: var(--muted); text-decoration: none; font-size: 0.82rem; transition: color 0.15s; }
-    footer a:hover { color: var(--text); }
-    footer .copy { color: #3f3f46; font-size: 0.75rem; }
+  .media-placeholder svg { width: 30px; height: 30px; opacity: 0.6; }
+  .media-placeholder span { font-size: 0.72rem; letter-spacing: 0.04em; }
 
-    @media (max-width: 640px) {
-      h1 { font-size: 2rem; }
-      header { padding: 72px 0 36px; }
-      .install-box { font-size: 0.72rem; padding: 14px 18px; }
-      .feature { flex: 0 0 220px; }
-    }
-  </style>
+  /* ---------- CTA strip ---------- */
+
+  .cta {
+    margin: 72px 0 0;
+    padding: 0 0 64px;
+    border-top: 1px solid var(--line);
+    text-align: center;
+  }
+
+  .cta p {
+    font-family: 'Fraunces', serif;
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: var(--text);
+    margin: 44px 0 26px;
+  }
+
+  .cta p em { color: var(--accent); font-style: italic; }
+
+  /* ---------- Footer ---------- */
+
+  footer {
+    padding: 28px 0 64px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+
+  footer .links { display: flex; gap: 20px; }
+  footer a { color: var(--muted-dim); text-decoration: none; font-size: 0.74rem; transition: color 0.15s; }
+  footer a:hover { color: var(--muted); }
+  footer .copy { color: var(--muted-dim); font-size: 0.74rem; }
+
+  @media (max-width: 640px) {
+    header { padding: 64px 0 0; }
+    h1 { max-width: 100%; }
+    .media { aspect-ratio: 4 / 3; }
+    .actions { flex-wrap: wrap; gap: 16px; justify-content: center; }
+    footer { justify-content: flex-start; }
+  }
+
+  /* ---------- Cursor glow ---------- */
+  .cursor-glow {
+    position: fixed;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(167, 139, 250, 0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.3s;
+    opacity: 0;
+  }
+
+  body:hover .cursor-glow { opacity: 1; }
+
+  /* ---------- Reveal tagline on hover ---------- */
+  .tagline-reveal {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+    max-width: 46ch;
+    margin: 0 auto;
+    line-height: 1.8;
+  }
+
+  .tagline-reveal .word {
+    color: var(--bg);
+    transition: color 0.3s ease;
+    cursor: default;
+  }
+
+  .tagline-reveal:hover .word {
+    color: var(--muted);
+  }
+
+  .tagline-reveal .word:hover {
+    color: var(--accent);
+  }
+</style>
 </head>
 <body>
-  <div class="container">
+  <div class="cursor-glow" id="glow"></div>
+  <div class="wrap">
+
     <header>
-      <img src="assets/logo.png" alt="3A" class="logo-img">
-      <h1>Agnostic Account Assessment</h1>
-      <p class="tagline">Terminal-first cloud security, cost, and architecture analysis. One command, full picture.</p>
+      <div class="mark" aria-hidden="true">
+        <img src="assets/logo.png" alt="3A" style="width: 280px; height: auto; border-radius: 22px; display: block; margin: 0 auto 22px;">
+      </div>
+
+      <p class="eyebrow">Cloud Agnostic<span class="sep">/</span>CLI-based</p>
+
+      <h1>Know your <em>Cloud</em>.</h1>
+
+      <div class="install">
+        <div class="install-box" onclick="navigator.clipboard.writeText('curl -fsSL https://chxmxii.github.io/3a/install.sh | bash'); this.querySelector('.copy-btn').innerHTML = '&#10003;'">
+          <span class="prompt">$</span>
+          <span class="cmd">curl -fsSL https://chxmxii.github.io/3a/install.sh | bash</span>
+          <span class="copy-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span>
+        </div>
+        <p class="install-hint">requires Steampipe for resource discovery.</p>
+      </div>
+
+      <div class="actions">
+        <a href="https://github.com/chxmxii/3a" class="btn-gh">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          View on GitHub
+        </a>
+        <a href="https://github.com/chxmxii/3a/blob/master/README.md" class="link-secondary">Read the docs</a>
+      </div>
     </header>
 
-    <section class="install-section">
-      <div class="install-box" onclick="navigator.clipboard.writeText('curl -fsSL https://chxmxii.github.io/3a/install.sh | sh'); this.querySelector('.copy-btn').textContent = 'copied'">
-        <span class="prompt">$</span>
-        curl -fsSL https://chxmxii.github.io/3a/install.sh | sh
-        <span class="copy-btn">copy</span>
-      </div>
-      <p class="install-hint">Linux and macOS. Requires Steampipe for resource discovery.</p>
+    <section style="text-align: center; padding: 80px 0 180px; max-width: 560px; margin: 0 auto;">
+      <p class="tagline-reveal">
+        <span class="word">3a</span> <span class="word">is</span> <span class="word">a</span> <span class="word">terminal-first</span> <span class="word">assessment</span> <span class="word">tool.</span> <span class="word">One</span> <span class="word">command</span> <span class="word">discovers</span> <span class="word">your</span> <span class="word">resources,</span> <span class="word">checks</span> <span class="word">them</span> <span class="word">against</span> <span class="word">security</span> <span class="word">and</span> <span class="word">cost</span> <span class="word">baselines,</span> <span class="word">and</span> <span class="word">tells</span> <span class="word">you</span> <span class="word">what's</span> <span class="word">actually</span> <span class="word">wrong.</span>
+      </p>
     </section>
 
-    <div class="terminal">
-      <div class="terminal-bar">
-        <div class="terminal-dot"></div>
-        <div class="terminal-dot"></div>
-        <div class="terminal-dot"></div>
-      </div>
-      <div class="terminal-body"><span class="dim">$</span> 3a assess production
-
-<span class="hi">   _____ _____</span>
-<span class="hi">  |____ |  _  |</span>
-<span class="hi">      / / |_| |</span>
-<span class="hi">      \ \__  _|</span>
-<span class="hi">  .___/ / | |</span>
-<span class="hi">  \____/  \_/</span>
-
-<span class="dim">  Agnostic Account Assessment
-  Profile: production | Provider: aws | ID: 35c60bb7</span>
-
-  <span class="ok">&#10003;</span> Connected and validated
-  <span class="ok">&#10003;</span> Discovered 1772 resources across 18 regions
-  <span class="ok">&#10003;</span> Mapped 198 relationships
-  <span class="ok">&#10003;</span> Security: 152 findings
-  <span class="ok">&#10003;</span> Sizing: 42 vCPUs, 168.0 GB memory
-  <span class="ok">&#10003;</span> Actual cost: $487.32/month
-  <span class="ok">&#10003;</span> Checklist: 18 pass, 3 fail, 5 warn
-
-  <span class="ok">&#10003; Assessment complete</span> <span class="dim">(23.4s)</span></div>
-    </div>
-
-    <section class="features-wrapper">
-      <h2>What it does</h2>
-      <div class="features">
-        <div class="feature">
-          <div class="feature-num">01</div>
-          <h3>Discovery</h3>
-          <p>VPCs, EC2, RDS, Lambda, S3, IAM, EKS, ALB, EFS, ASG. 25+ resource types via Steampipe SQL.</p>
-        </div>
-        <div class="feature">
-          <div class="feature-num">02</div>
-          <h3>Security Assessment</h3>
-          <p>26 rules against CIS Benchmarks, Well-Architected Framework, and operational best practices.</p>
-        </div>
-        <div class="feature">
-          <div class="feature-num">03</div>
-          <h3>Architecture</h3>
-          <p>Network topology and resource relationship trees. VPC hierarchy, SG rules, route visualization.</p>
-        </div>
-        <div class="feature">
-          <div class="feature-num">04</div>
-          <h3>Cost Analysis</h3>
-          <p>Real billing from AWS Cost Explorer. Idle and oversized detection. Static fallback when unavailable.</p>
-        </div>
-        <div class="feature">
-          <div class="feature-num">05</div>
-          <h3>Reports</h3>
-          <p>Export to Markdown, JSON, or Excel. Executive summaries and full technical reports.</p>
-        </div>
-        <div class="feature">
-          <div class="feature-num">06</div>
-          <h3>Terminal UI</h3>
-          <p>5 interactive views with keyboard navigation, region/type filtering, and resource detail panels.</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="cta">
-      <h2>Assess your cloud in seconds</h2>
-      <p>No dashboards. No web UI. Just one command and full visibility.</p>
-      <a href="https://github.com/chxmxii/3a" class="btn">View on GitHub</a>
-    </section>
+    <hr style="border: none; border-top: 1px solid var(--line); margin: 0 0 48px;">
 
     <footer>
       <div class="links">
-        <a href="https://github.com/chxmxii/3a">GitHub</a>
         <a href="https://github.com/chxmxii/3a/blob/master/README.md">Docs</a>
         <a href="https://github.com/chxmxii/3a/blob/master/ROADMAP.md">Roadmap</a>
         <a href="https://github.com/chxmxii/3a/blob/master/CONTRIBUTING.md">Contributing</a>
@@ -357,6 +364,14 @@
       </div>
       <p class="copy">MIT License</p>
     </footer>
+
   </div>
+  <script>
+    const glow = document.getElementById('glow');
+    document.addEventListener('mousemove', (e) => {
+      glow.style.left = e.clientX + 'px';
+      glow.style.top = e.clientY + 'px';
+    });
+  </script>
 </body>
 </html>
