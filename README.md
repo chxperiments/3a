@@ -16,8 +16,10 @@ Supports AWS and OCI via Steampipe.
 
 ## Install
 
+One-line install (Linux and macOS):
+
 ```bash
-go install github.com/chxmxii/3a/cmd/3a@latest
+curl -fsSL https://chxmxii.github.io/3a/install.sh | bash
 ```
 
 Or build from source:
@@ -26,6 +28,13 @@ Or build from source:
 git clone https://github.com/chxmxii/3a.git
 cd 3a
 go build -o bin/3a ./cmd/3a/
+sudo cp bin/3a /usr/local/bin/
+```
+
+Uisng docker/podmna:
+
+```bash
+docker pull docker pull ghcr.io/chxmxii/3a:latest
 ```
 
 ## Usage
@@ -34,13 +43,16 @@ go build -o bin/3a ./cmd/3a/
 # Add a profile
 3a profiles add
 
+# Configure Wizard
+3a configure
+
 # Run assessment (opens TUI when done)
 3a assess <profile-name>
 
 # Run without TUI
 3a assess <profile-name> --no-tui
 
-# Generate reports (markdown + JSON)
+# Generate reports (markdown + JSON + excel)
 3a report <profile-name>
 
 # List profiles
@@ -50,7 +62,7 @@ go build -o bin/3a ./cmd/3a/
 
 ## What it does
 
-1. Connects to Steampipe and queries cloud resources (VPCs, EC2, S3, IAM, RDS, EKS, etc.)
+1. Connects to Steampipe and queries cloud resources.
 2. Reconstructs architecture relationships (VPC-to-Subnet, EC2-to-SecurityGroup, etc.)
 3. Evaluates resources against CIS Benchmarks and Well-Architected Framework rules
 4. Calculates infrastructure sizing (vCPUs, memory, storage)
@@ -101,7 +113,7 @@ steampipe plugin install oci
 steampipe service start
 ```
 
-Configure credentials in `~/.steampipe/config/aws.spc`:
+Configure credentials in `~/.steampipe/config/aws.spc` ():
 
 ```hcl
 connection "aws" {
