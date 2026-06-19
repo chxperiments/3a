@@ -36,6 +36,7 @@ var (
 	doneStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#10B981"))
 	failStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#EF4444"))
 	dimStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#6B7280"))
+	warnStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#F59E0B"))
 )
 
 // spinner runs an animated spinner while a task executes.
@@ -189,12 +190,18 @@ func runAssessment(profileName, connString string, noTUI bool) error {
 		sp1.fail("Connection failed")
 		return fmt.Errorf("connecting to steampipe: %w", err)
 	}
-	if err := sp.ValidateProfile(ctx); err != nil {
+	warn, err := sp.ValidateProfile(ctx)
+	if err != nil {
 		sp1.fail("Validation failed")
 		_ = store.UpdateAssessmentStatus(assessmentID, "failed", nil)
 		return fmt.Errorf("profile validation failed:\n\n%w", err)
 	}
-	sp1.succeed("Connected and validated")
+	if warn != "" {
+		sp1.succeed("Connected (limited access)")
+		fmt.Printf("  %s\n", warnStyle.Render("⚠ "+warn))
+	} else {
+		sp1.succeed("Connected and validated")
+	}
 
 	// Step 2: Discover.
 	sp3 := newSpinner("Discovering resources (this may take a moment)...")
