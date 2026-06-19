@@ -113,7 +113,7 @@ func runConfigure() error {
 	}
 
 	// Step 7: Regions.
-	fmt.Print("Regions? (comma-separated, default us-east-1): ")
+	fmt.Print("Regions? (comma-separated, * for all, default us-east-1): ")
 	regionsInput, err := readLine(reader)
 	if err != nil {
 		return err
@@ -121,6 +121,8 @@ func runConfigure() error {
 	var regions []string
 	if regionsInput == "" {
 		regions = []string{"us-east-1"}
+	} else if strings.TrimSpace(regionsInput) == "*" {
+		regions = []string{"*"}
 	} else {
 		for _, r := range strings.Split(regionsInput, ",") {
 			r = strings.TrimSpace(r)
@@ -219,13 +221,18 @@ func writeSteampipeAWSConfig(profileName, awsProfile string, regions []string) e
 	spcFile := filepath.Join(spcDir, "aws.spc")
 
 	// Build regions list.
-	quotedRegions := make([]string, len(regions))
-	for i, r := range regions {
-		quotedRegions[i] = fmt.Sprintf("%q", r)
+	var regionsList string
+	if len(regions) == 1 && regions[0] == "*" {
+		regionsList = "[\"*\"]"
+	} else {
+		quotedRegions := make([]string, len(regions))
+		for i, r := range regions {
+			quotedRegions[i] = fmt.Sprintf("%q", r)
+		}
+		regionsList = "[" + strings.Join(quotedRegions, ", ") + "]"
 	}
-	regionsList := strings.Join(quotedRegions, ", ")
 
-	block := fmt.Sprintf("\nconnection \"aws_%s\" {\n  plugin  = \"aws\"\n  profile = \"%s\"\n  regions = [%s]\n}\n",
+	block := fmt.Sprintf("\nconnection \"aws_%s\" {\n  plugin  = \"aws\"\n  profile = \"%s\"\n  regions = %s\n}\n",
 		profileName, awsProfile, regionsList)
 
 	f, err := os.OpenFile(spcFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
