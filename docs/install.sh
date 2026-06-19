@@ -50,4 +50,43 @@ fi
 
 echo "Installed $BINARY $VERSION to $INSTALL_DIR/$BINARY"
 echo ""
+
+# confirm prompts the user for a yes/no answer. It reads from the controlling
+# terminal so it works even when this script is piped (curl ... | bash). In a
+# non-interactive environment (no tty) it returns false so nothing is installed
+# without explicit confirmation.
+confirm() {
+  if [ ! -e /dev/tty ]; then
+    return 1
+  fi
+  printf "%s [y/N] " "$1" > /dev/tty
+  read ans < /dev/tty || return 1
+  case "$ans" in
+    [Yy] | [Yy][Ee][Ss]) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# A3 needs Steampipe (plus a provider plugin) to query cloud resources. Offer to
+# install them now; each action is gated on explicit confirmation.
+if ! command -v steampipe >/dev/null 2>&1; then
+  echo "Steampipe is not installed. A3 uses it to query cloud resources."
+  if confirm "Install Steampipe now?"; then
+    echo "Installing Steampipe (you may be prompted for your password)..."
+    sudo /bin/sh -c "$(curl -fsSL https://steampipe.io/install/steampipe.sh)"
+  else
+    echo "Skipping Steampipe. Install it later from https://steampipe.io/downloads"
+  fi
+fi
+
+if command -v steampipe >/dev/null 2>&1; then
+  if confirm "Install the AWS Steampipe plugin?"; then
+    steampipe plugin install aws
+  fi
+  if confirm "Install the OCI Steampipe plugin?"; then
+    steampipe plugin install oci
+  fi
+fi
+
+echo ""
 echo "Run: a3 configure"

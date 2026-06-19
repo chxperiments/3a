@@ -108,11 +108,53 @@ tasks:
       - cmd: psql "postgres://steampipe@localhost:9193/steampipe" -c "SELECT 1" > /dev/null 2>&1 && echo "Steampipe is accessible" || echo "Steampipe not running. Start with steampipe service start"
         ignore_error: true
 
+  steampipe-install:
+    desc: Install Steampipe if missing (asks for confirmation first)
+    cmds:
+      - cmd: |
+          if command -v steampipe >/dev/null 2>&1; then
+            echo "Steampipe already installed: $(steampipe --version)"
+            exit 0
+          fi
+          printf "Steampipe is not installed. Install it now? [y/N] "
+          read ans
+          case "$ans" in
+            [Yy]|[Yy][Ee][Ss])
+              echo "Installing Steampipe (you may be prompted for your password)..."
+              sudo /bin/sh -c "$(curl -fsSL https://steampipe.io/install/steampipe.sh)" ;;
+            *)
+              echo "Skipped. Install later from https://steampipe.io/downloads" ;;
+          esac
+
+  steampipe-plugins:
+    desc: Install the AWS and/or OCI Steampipe plugins (asks for confirmation first)
+    deps: [steampipe-install]
+    cmds:
+      - cmd: |
+          if ! command -v steampipe >/dev/null 2>&1; then
+            echo "Steampipe is not installed; run 'task steampipe-install' first."
+            exit 1
+          fi
+          for plugin in aws oci; do
+            if [ -d "$HOME/.steampipe/plugins/hub.steampipe.io/plugins/turbot/$plugin@latest" ]; then
+              echo "Steampipe '$plugin' plugin already installed."
+              continue
+            fi
+            printf "Install the Steampipe '%s' plugin? [y/N] " "$plugin"
+            read ans
+            case "$ans" in
+              [Yy]|[Yy][Ee][Ss]) steampipe plugin install "$plugin" ;;
+              *) echo "Skipped '$plugin'." ;;
+            esac
+          done
+
   setup:
-    desc: First-time setup (install deps, create config dir, add bin to PATH)
+    desc: First-time setup (deps, Steampipe + plugins, config dir, PATH)
     cmds:
       - go mod download
       - mkdir -p ~/.a3
       - task: build
+      - task: steampipe-install
+      - task: steampipe-plugins
       - cmd: grep -q "$(pwd)/bin" ~/.bashrc 2>/dev/null || echo 'export PATH="{{.ROOT_DIR}}/bin:$PATH"' >> ~/.bashrc
         ignore_error: true
